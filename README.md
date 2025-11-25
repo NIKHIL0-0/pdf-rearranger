@@ -1,5 +1,5 @@
-#**PDF Page Rearranger with AI
-**
+#**PDF Page Rearranger with AI**
+
 An intelligent PDF page reordering system that restores shuffled / out-of-order PDFs back to their correct reading sequence.
 
 Instead of relying only on page numbers (which are often missing or wrong), this system mimics human reasoning using a hybrid decision model:
