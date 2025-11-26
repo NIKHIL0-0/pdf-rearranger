@@ -1,265 +1,85 @@
-# PDF Rearranger
+#**PDF Page Rearranger with AI**
 
-Intelligent PDF reordering system with OCR support, semantic analysis, and duplicate detection.
+An intelligent PDF page reordering system that restores shuffled / out-of-order PDFs back to their correct reading sequence.
 
-## Features
+Instead of relying only on page numbers (which are often missing or wrong), this system mimics human reasoning using a hybrid decision model:
 
-### 🔍 Text Extraction
-- **Direct text extraction** attempted first using PyMuPDF
-- **OCR fallback** for scanned/image-only pages using Tesseract
-- Automatic header and footer detection
+Detect structural clues (page numbers, section numbering, headings)
 
-### 🔢 Page Number Detection
-- Multiple pattern recognition (e.g., "Page 5", "5/24", "-5-")
-- Confidence scoring for reliability
-- Missing page detection when sequences have gaps
+Understand document type (legal, academic, business report, etc.)
 
-### 📑 Section Classification
-- Keyword-based section detection
-- Priority scoring for structural elements
-- Common document sections: Definitions, Annexures, Repayment Schedule, etc.
+Use semantic continuity + AI reasoning when structure fails
 
-### 🧠 Semantic Analysis
-- Sentence embeddings using `sentence-transformers`
-- Cosine similarity for page continuity
-- Near-duplicate detection (>95% similarity)
+#**Why I Built It**
 
-### 🔄 Hybrid Ordering Algorithm
-Pages are reordered using a weighted scoring system:
-- **Page numbers (60%)** - Highest confidence signal
-- **Section keywords (20%)** - Structural guidance
-- **Semantic continuity (20%)** - Topic flow
+Manually reordering PDFs — especially scanned or mis-merged files — is slow and error-prone.
+AI tools alone are not reliable for every case, so I built a multi-layer logic system that combines rules + AI:
 
-### 🔍 Duplicate Detection
-- **Exact duplicates**: SHA-256 content hashing
-- **Near duplicates**: Embedding similarity (>95% threshold)
-- Comprehensive duplicate report
+#**Method	Advantage**
+Page number recognition	Fast & accurate when pages are labeled
+Section hierarchy (1 → 1.1 → 1.1.1)	Works for academic & technical docs
+Keyword ordering (Intro → Methods → Results…)	Useful when numbering missing
+Semantic similarity	Maintains content continuity
+Gemini AI analysis	Solves complex, ambiguous cases
 
-### 📄 Export & Reports
-- Reordered PDF with embedded bookmarks
-- Table of Contents (PDF + text formats)
-- Complete JSON report with all metadata
-- Missing pages report
-- Duplicate detection report
+This gives speed when possible and intelligence when required.
 
-## Installation
+#**How It Works (Architecture)**
+PDF → Text Extraction (OCR + PyMuPDF)
+        ↓
+Multi-Signal Detection
+   → Page numbers
+   → Section hierarchy
+   → Keyword flow
+   → Semantic embeddings
+   → Document type classifier
+        ↓
+Hybrid Ordering Engine
+   → Rule-based (fast path)
+   → Gemini AI (fallback path)
+        ↓
+Reordered PDF + TOC + Analysis Report
 
-### Prerequisites
-1. **Python 3.8+**
-2. **Tesseract OCR** (for scanned documents)
-   - Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
-   - Linux: `sudo apt-get install tesseract-ocr`
-   - Mac: `brew install tesseract`
+#**Assumptions & Limitations**
+Category	Notes
+Assumptions	Document has some logical flow (not 100% random)
+Required	English text; Tesseract for OCR if scanned
+Dependency	Gemini API enables deep AI ordering
+Limitation	Visual-only pages (charts/maps) may reduce accuracy
+Trade-off	AI mode is slower but handles difficult cases better
 
-### Setup
+#**What I Would Improve With More Time**
 
-1. Clone or download this repository
+Multi-language support (regex + AI multilingual models)
 
-2. Create virtual environment:
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+Visual layout understanding (detect headers/footers via computer vision)
 
-3. Install dependencies:
-```powershell
-pip install -r requirments.txt
-```
+Learning loop that improves accuracy using user feedback
 
-4. **Configure API Key** (for Gemini AI features):
-   - Copy `.env.example` to `.env`
-   - Add your Gemini API key:
-   ```
-   GEMINI_API_KEY=your_actual_api_key_here
-   ```
-   - Get API key from: https://aistudio.google.com/app/apikey
+Confidence score per page + uncertainty heatmap
 
-5. (Optional) Set Tesseract path if not in PATH:
-```powershell
-$env:TESSERACT_CMD = "C:\Program Files\Tesseract-OCR\tesseract.exe"
-```
+#**What Makes This Unique**
 
-## Usage
+✔ Hybrid human-style reasoning, not just full AI or full rule-based
+✔ Automatic fallback hierarchy ensures graceful degradation
+✔ Multiple interfaces — CLI, API, and Streamlit UI
+✔ Transparency — system generates a detailed analysis report explaining why each page was placed
 
-### Option 1: Flask API
-
-Start the server:
-```powershell
-python app.py
-```
-
-Server runs at `http://127.0.0.1:5000`
-
-#### API Endpoints
-
-**Upload and Process:**
-```bash
-POST /upload
-Content-Type: multipart/form-data
-Body: pdf=<file>
-```
-
-**Process Existing File:**
-```bash
-POST /process/<filename>
-```
-
-**List Files:**
-```bash
-GET /files
-```
-
-**View Results:**
-```bash
-GET /view/<filename>
-```
-
-**Download Output:**
-```bash
-GET /download/<filename>
-```
-
-### Option 2: Command Line
-
-Process a single PDF:
-```powershell
+#**Quick Start**
+pip install -r requirements.txt
 python processor.py uploads/document.pdf
-```
+# or
+python cli.py uploads/document.pdf --gemini
 
-Process all PDFs in uploads folder:
-```powershell
-python process_uploads.py
-```
 
-## Output Files
+Outputs include:
 
-After processing `document.pdf`, you'll find in `outputs/`:
+document_reordered.pdf
 
-- `document_reordered.pdf` - Reordered PDF with bookmarks
-- `document_toc.pdf` - Table of Contents (standalone)
-- `document_toc.txt` - Table of Contents (text format)
-- `document_complete_report.json` - Full processing report
+document_toc.pdf
 
-## Project Structure
+document_complete_report.json
 
-```
-pdf-rearranger/
-├── app.py                      # Flask API server
-├── processor.py                # Main processing pipeline
-├── process_uploads.py          # Batch processor
-├── requirments.txt             # Dependencies
-├── modules/
-│   ├── extractor.py           # Text extraction + OCR
-│   ├── page_numbers.py        # Page number detection
-│   ├── headings.py            # Title & section classification
-│   ├── embeddings.py          # Semantic similarity
-│   ├── duplicates.py          # Duplicate detection
-│   ├── ordering.py            # Hybrid ordering algorithm
-│   └── export_pdf.py          # PDF export & TOC generation
-├── uploads/                    # Input PDFs
-└── outputs/                    # Processed results
-```
+Built with curiosity around:
 
-## Configuration
-
-### Tesseract Path
-Set environment variable if Tesseract is not in PATH:
-```powershell
-$env:TESSERACT_CMD = "C:\Path\To\tesseract.exe"
-```
-
-### Ordering Weights
-Modify in `modules/ordering.py`:
-```python
-WEIGHTS = {
-    "page_number": 0.6,
-    "section_priority": 0.2,
-    "semantic_continuity": 0.2
-}
-```
-
-### Duplicate Threshold
-Adjust in `modules/duplicates.py`:
-```python
-near_duplicates = find_near_duplicates(pages, embeddings, threshold=0.95)
-```
-
-## Examples
-
-### Example 1: Scanned Loan Agreement
-
-Input: Shuffled scanned loan document
-- OCR automatically triggered
-- Pages reordered by detected numbers
-- Annexures identified and grouped
-- Duplicate signature pages detected
-
-Output:
-- Reordered PDF with proper sequence
-- TOC with sections: Agreement → Schedule → Annexures
-- Report showing 3 duplicate pages removed
-
-### Example 2: Unnumbered Contract
-
-Input: Contract without page numbers
-- Ordering by section keywords
-- Semantic continuity maintained
-- Definitions → Terms → Schedules → Signatures
-
-## Troubleshooting
-
-**OCR not working:**
-- Install Tesseract OCR
-- Set TESSERACT_CMD environment variable
-- Verify: `tesseract --version`
-
-**Import errors:**
-- Activate virtual environment
-- Reinstall: `pip install -r requirments.txt`
-
-**Model download slow:**
-- First run downloads sentence-transformers model (~90MB)
-- Subsequent runs use cached model
-
-**Memory issues with large PDFs:**
-- Process in batches
-- Reduce DPI in extractor.py (default: 300)
-
-## Technical Details
-
-### Embedding Model
-Uses `all-MiniLM-L6-v2`:
-- Size: 80MB
-- Speed: ~2000 sentences/sec
-- Embedding dim: 384
-
-### Page Ordering Logic
-
-1. **High page number coverage (>70%)**
-   - Sort by detected page numbers
-   - Place unnumbered pages at end
-
-2. **Low page number coverage (<70%)**
-   - Compute weighted scores
-   - Sort by combined score
-   - Apply continuity optimization
-
-### Performance
-
-- ~1-2 pages/second (text extraction)
-- OCR: ~5-10 seconds/page (300 DPI)
-- Embeddings: ~50-100 pages/second
-- Total: ~2-3 minutes for 50-page document
-
-## License
-
-MIT License - Feel free to use and modify
-
-## Credits
-
-Built with:
-- PyMuPDF (fitz)
-- Tesseract OCR
-- sentence-transformers
-- scikit-learn
-- Flask
+📌 document structure → 📌 intelligence systems → 📌 practical AI
