@@ -46,8 +46,8 @@ def extract_pages_text(pdf_path):
                 ocr_used = True
             except Exception as e:
                 if page_num == 0:  # Only show warning once
-                    print(f"⚠️  OCR unavailable: {e}")
-                    print(f"⚠️  Install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki")
+                    print(f"WARNING: OCR unavailable: {e}")
+                    print(f"WARNING: Install Tesseract: https://github.com/UB-Mannheim/tesseract/wiki")
                 text = f"[OCR unavailable - page {page_num}]"
         elif len(text) < 15:
             text = f"[No text extracted from page {page_num}]"

@@ -18,13 +18,13 @@ def main():
         print("  python cli.py uploads --gemini               # All PDFs with Gemini AI")
         print("  python cli.py uploads/document.pdf --gemini  # Single file with Gemini")
         print("  python cli.py uploads --gemini --api-key YOUR_KEY  # Override API key")
-        print("\n💡 Add GEMINI_API_KEY to .env file or get key from: https://aistudio.google.com/app/apikey")
+        print("\nTip: Add GEMINI_API_KEY to .env file or get key from: https://aistudio.google.com/app/apikey")
         sys.exit(1)
     
     input_path = sys.argv[1]
     
     if not os.path.exists(input_path):
-        print(f"❌ Error: Path not found: {input_path}")
+        print(f"ERROR: Path not found: {input_path}")
         sys.exit(1)
     
     # Parse arguments
@@ -34,7 +34,7 @@ def main():
     
     # Validate API key if Gemini is requested
     if use_gemini and (not gemini_api_key or gemini_api_key == 'your_api_key_here'):
-        print("❌ Error: Gemini API key not found!")
+        print("ERROR: Gemini API key not found!")
         print("   Add GEMINI_API_KEY to your .env file or use --api-key option")
         print("   Get API key from: https://aistudio.google.com/app/apikey")
         sys.exit(1)
@@ -45,7 +45,7 @@ def main():
             key_index = sys.argv.index('--api-key') + 1
             gemini_api_key = sys.argv[key_index]
         except (IndexError, ValueError):
-            print("❌ Error: --api-key requires a value")
+            print("ERROR: --api-key requires a value")
             sys.exit(1)
     
     # Determine if processing single file or folder
@@ -54,21 +54,21 @@ def main():
         pdf_files = glob.glob(os.path.join(input_path, "*.pdf"))
         
         if not pdf_files:
-            print(f"❌ No PDF files found in: {input_path}")
+            print(f"ERROR: No PDF files found in: {input_path}")
             sys.exit(1)
         
-        print(f"📁 Found {len(pdf_files)} PDF file(s) in {input_path}")
+        print(f"Found {len(pdf_files)} PDF file(s) in {input_path}")
         print("=" * 70)
         
         if use_gemini:
-            print("🤖 Gemini AI ordering enabled for all files")
+            print("Gemini AI ordering enabled for all files")
             print("   Using: gemini-2.5-flash-lite model")
             print("   Mode: Intelligent document analysis and reordering")
         
         # Process each PDF
         for i, pdf_file in enumerate(pdf_files, 1):
             filename = os.path.basename(pdf_file)
-            print(f"\n🔍 Processing [{i}/{len(pdf_files)}]: {filename}")
+            print(f"\nProcessing [{i}/{len(pdf_files)}]: {filename}")
             print("-" * 50)
             
             try:
@@ -80,7 +80,7 @@ def main():
                 )
                 
                 if result and result.get("success"):
-                    print(f"✅ {filename}: Completed successfully")
+                    print(f"SUCCESS {filename}: Completed successfully")
                     if use_gemini:
                         metadata = result.get("complete_report", {}).get("ordering_metadata", {})
                         if metadata.get("ordering_method") in ["gemini_ai", "gemini_ai_full_content"]:
@@ -94,18 +94,18 @@ def main():
                     print(f"⚠️  {filename}: Processing completed with warnings")
                     
             except Exception as e:
-                print(f"❌ {filename}: Error - {e}")
+                print(f"ERROR {filename}: {e}")
         
         print("\n" + "=" * 70)
-        print("✅ Batch processing complete!")
-        print(f"📁 All output files saved to: outputs/")
+        print("Batch processing complete!")
+        print("All output files saved to: outputs")
         
     elif input_path.endswith('.pdf'):
         # Process single file
         filename = os.path.basename(input_path)
         
         if use_gemini:
-            print("🤖 Gemini AI ordering enabled")
+            print("Gemini AI ordering enabled")
             print("   Using: gemini-2.5-flash-lite model")
             print("   Mode: Intelligent document analysis and reordering")
         
@@ -124,7 +124,7 @@ def main():
         complete_report = result.get("complete_report", {})
         
         print("\n" + "=" * 70)
-        print("✅ Processing Complete!")
+        print("Processing Complete!")
         print("=" * 70)
         print(f"\n📄 Output PDF: {output_files.get('reordered_pdf', 'N/A')}")
         
@@ -140,7 +140,7 @@ def main():
             print(f"   Method: {method}")
             
             if method in ['gemini_ai', 'gemini_ai_full_content', 'gemini_ai_structured']:
-                print(f"   🤖 AI Document Type: {ordering_metadata.get('document_type', 'unknown')}")
+                print(f"   AI Document Type: {ordering_metadata.get('document_type', 'unknown')}")
                 print(f"   🎯 AI Confidence: {ordering_metadata.get('confidence', 0)*100:.0f}%")
                 print(f"   🧠 AI Analysis: {ordering_metadata.get('reasoning', 'N/A')[:100]}...")
                 sections = len(ordering_metadata.get('detected_sections', []))
@@ -163,7 +163,7 @@ def main():
             print(f"   Exact: {exact_dupes}")
             print(f"   Near: {near_dupes}")
     else:
-        print("\n❌ Processing failed!")
+        print("\nProcessing failed!")
         sys.exit(1)
 
 if __name__ == "__main__":

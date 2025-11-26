@@ -45,17 +45,17 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
     Returns:
         Dictionary with processing results and output paths
     """
-    print(f"🔍 Processing: {os.path.basename(pdf_path)}")
+    print(f"Processing: {os.path.basename(pdf_path)}")
     print("=" * 70)
     
     # Step 1: Extract text from pages
-    print("\n📄 Step 1: Extracting text from pages...")
+    print(f"\nStep 1: Extracting text from pages...")
     pages = extract_pages_text(pdf_path)
     ocr_count = sum(1 for p in pages if p.get("ocr_used", False))
-    print(f"   ✓ Extracted {len(pages)} pages ({ocr_count} used OCR)")
+    print(f"   Extracted {len(pages)} pages ({ocr_count} used OCR)")
     
     # Step 2: Detect page numbers and titles
-    print("\n🔢 Step 2: Detecting page numbers and titles...")
+    print(f"\nStep 2: Detecting page numbers and titles...")
     
     # First pass: quick detection
     for page in pages:
@@ -77,7 +77,7 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
     
     # Second pass: deep analysis if needed
     if page_num_coverage < 0.7:
-        print(f"   ⚠️  Low page number coverage ({page_num_coverage*100:.0f}%), using deep title analysis...")
+        print(f"   WARNING: Low page number coverage ({page_num_coverage*100:.0f}%), using deep title analysis...")
         for page in pages:
             if not page["page_number_detected"][0]:
                 # Re-extract title with deep analysis
@@ -98,14 +98,14 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
             print(f"      Page {p['page_index']}: {p['section_number']} - {p['title'][:50]}")
     
     blank_pages = sum(1 for p in pages if p.get("title") == "[BLANK PAGE]")
-    print(f"   ✓ Detected page numbers on {pages_with_numbers}/{len(pages)} pages")
-    print(f"   ✓ Extracted titles from {sum(1 for p in pages if p['title'] and p['title'] != '[BLANK PAGE]')} pages")
-    print(f"   ✓ Section numbers on {len(pages_with_sections)} pages")
+    print(f"   Detected page numbers on {pages_with_numbers}/{len(pages)} pages")
+    print(f"   Extracted titles from {sum(1 for p in pages if p['title'] and p['title'] != '[BLANK PAGE]')} pages")
+    print(f"   Section numbers on {len(pages_with_sections)} pages")
     if blank_pages > 0:
-        print(f"   ⚠️  Found {blank_pages} blank page(s)")
+        print(f"   WARNING: Found {blank_pages} blank page(s)")
     
     # Step 3: Classify sections
-    print("\n📑 Step 3: Classifying sections...")
+    print(f"\nStep 3: Classifying sections...")
     for page in pages:
         section_type, priority, position_hint = classify_section(page["text"], page["title"])
         page["section_type"] = section_type
@@ -113,23 +113,23 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
         page["position_hint"] = position_hint
     
     classified = sum(1 for p in pages if p["section_type"] != "unknown")
-    print(f"   ✓ Classified {classified} sections with keywords")
+    print(f"   Classified {classified} sections with keywords")
     
     # Step 4: Generate embeddings
-    print("\n🧠 Step 4: Generating semantic embeddings...")
+    print(f"\nStep 4: Generating semantic embeddings...")
     texts = [p["text"] for p in pages]
     embeddings = generate_embeddings(texts)
-    print(f"   ✓ Generated embeddings for {len(embeddings)} pages")
+    print(f"   Generated embeddings for {len(embeddings)} pages")
     
     # Step 5: Detect duplicates
-    print("\n🔍 Step 5: Detecting duplicate pages...")
+    print("\nStep 5: Detecting duplicate pages...")
     exact_duplicates = find_exact_duplicates(pages)
     near_duplicates = find_near_duplicates(pages, embeddings, threshold=0.95)
     duplicate_report = generate_duplicate_report(pages, exact_duplicates, near_duplicates)
     mark_duplicates(pages, exact_duplicates, near_duplicates)
     
-    print(f"   ✓ Found {len(exact_duplicates)} exact duplicate groups")
-    print(f"   ✓ Found {len(near_duplicates)} near-duplicate pairs")
+    print(f"   Found {len(exact_duplicates)} exact duplicate groups")
+    print(f"   Found {len(near_duplicates)} near-duplicate pairs")
     
     # Step 6: Detect missing pages (only if we have page numbers OR using Gemini)
     missing_pages = []
@@ -143,39 +143,39 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
     page_num_coverage = len(pages_with_numbers_list) / len(pages) if pages else 0
     
     if page_num_coverage >= 0.3 or (use_gemini and gemini_api_key):
-        print("\n🔎 Step 6: Detecting missing pages...")
+        print("\nStep 6: Detecting missing pages...")
         missing_pages = detect_missing_pages(pages_with_numbers_list)
         
         if missing_pages:
             print(f"   ⚠ Missing pages detected: {missing_pages}")
         else:
-            print(f"   ✓ No missing pages detected")
+            print(f"   No missing pages detected")
     else:
-        print("\n🔎 Step 6: Skipping missing page detection (insufficient page numbers)...")
+        print("\nStep 6: Skipping missing page detection (insufficient page numbers)...")
         print(f"   ℹ️  Only {len(pages_with_numbers_list)}/{len(pages)} pages have numbers")
     
     # Step 7: Reorder pages
     if use_gemini and GEMINI_AVAILABLE and gemini_api_key:
-        print("\n🔄 Step 7: Reordering pages with Gemini AI...")
+        print("\nStep 7: Reordering pages with Gemini AI...")
         gemini_result = order_pages_with_gemini(pages, gemini_api_key)
         
         if gemini_result[0] is not None:
             ordered_pages, ordering_metadata = gemini_result
             explanation = f"Gemini AI Analysis:\n{ordering_metadata.get('reasoning', '')}"
         else:
-            print("   ⚠️  Gemini ordering failed, falling back to hybrid algorithm...")
+            print("   WARNING: Gemini ordering failed, falling back to hybrid algorithm...")
             ordered_pages, ordering_metadata = order_pages_hybrid(pages, embeddings)
             explanation = generate_ordering_explanation(ordered_pages, ordering_metadata)
     else:
         if use_gemini and not gemini_api_key:
-            print("   ⚠️  Gemini requested but no API key provided, using hybrid algorithm...")
-        print("\n🔄 Step 7: Reordering pages with hybrid algorithm...")
+            print("   WARNING: Gemini requested but no API key provided, using hybrid algorithm...")
+        print("\nStep 7: Reordering pages with hybrid algorithm...")
         ordered_pages, ordering_metadata = order_pages_hybrid(pages, embeddings)
         explanation = generate_ordering_explanation(ordered_pages, ordering_metadata)
     
     reordered_count = sum(1 for p in ordered_pages if p["page_index"] != p["new_position"])
-    print(f"   ✓ Reordered {reordered_count} pages")
-    print(f"   ✓ Method: {ordering_metadata['ordering_method']}")
+    print(f"   Reordered {reordered_count} pages")
+    print(f"   Method: {ordering_metadata['ordering_method']}")
     
     # Step 8: Export all outputs
     print("\n💾 Step 8: Exporting results...")
@@ -224,10 +224,10 @@ def process_pdf_complete(pdf_path, output_dir="outputs", use_gemini=False, gemin
     
     output_files["complete_report_json"] = json_path
     
-    print(f"   ✓ Reordered PDF: {output_files.get('reordered_pdf', 'N/A')}")
-    print(f"   ✓ TOC PDF: {output_files.get('toc_pdf', 'N/A')}")
-    print(f"   ✓ TOC Text: {output_files.get('toc_text', 'N/A')}")
-    print(f"   ✓ Complete Report: {json_path}")
+    print(f"   Reordered PDF: {output_files.get('reordered_pdf', 'N/A')}")
+    print(f"   TOC PDF: {output_files.get('toc_pdf', 'N/A')}")
+    print(f"   TOC Text: {output_files.get('toc_text', 'N/A')}")
+    print(f"   Complete Report: {json_path}")
     
     print("\n" + "=" * 70)
     print("✅ Processing complete!")
@@ -269,7 +269,7 @@ if __name__ == "__main__":
         # Process each PDF
         for i, pdf_file in enumerate(pdf_files, 1):
             filename = os.path.basename(pdf_file)
-            print(f"\n🔍 Processing [{i}/{len(pdf_files)}]: {filename}")
+            print(f"\nProcessing [{i}/{len(pdf_files)}]: {filename}")
             print("-" * 50)
             
             try:

@@ -9,7 +9,7 @@ try:
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("⚠️  Google Generative AI not installed. Run: pip install google-generativeai")
+    print("WARNING: Google Generative AI not installed. Run: pip install google-generativeai")
 
 
 def configure_gemini(api_key):
@@ -29,7 +29,7 @@ def configure_gemini(api_key):
         genai.configure(api_key=api_key)
         return True
     except Exception as e:
-        print(f"⚠️  Error configuring Gemini: {e}")
+        print(f"WARNING: Error configuring Gemini: {e}")
         return False
 
 
@@ -45,7 +45,7 @@ def order_pages_with_gemini(pages, api_key=None):
         Tuple: (reordered_pages, ordering_metadata)
     """
     if not GEMINI_AVAILABLE:
-        print("⚠️  Gemini not available, falling back to rule-based ordering")
+        print("WARNING: Gemini not available, falling back to rule-based ordering")
         return None, {"error": "gemini_not_available"}
     
     if api_key:
