@@ -83,4 +83,4 @@ document_complete_report.json
 Built with curiosity around:
 
 📌 document structure → 📌 intelligence systems → 📌 practical AI
-video explanation: [text](https://drive.google.com/file/d/1p-0HesNHoI4nx2i6xMIuAghEkHuF05SH/view?usp=sharing)
+video explanation: [click to open](https://drive.google.com/file/d/1p-0HesNHoI4nx2i6xMIuAghEkHuF05SH/view?usp=sharing)
